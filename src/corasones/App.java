@@ -46,6 +46,7 @@ public class App extends Application {
         root.getChildren().addAll(playerImage, player2Image);
 
         TextField textField = new TextField();
+        textField.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
         textField.setOnAction(event -> {
             if (textField.isEditable()) textField.setEditable(false);
             if (textField.getText().equals("/connect")) {
