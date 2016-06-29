@@ -9,14 +9,34 @@ import java.io.ObjectOutputStream;
 
 public class GamePlayer implements java.io.Serializable{
 
-    String message="";
-    public Image playerIcon;
-    public ImageView playerImage;
+    private String message = null;
+    Image playerIcon;
+    ImageView playerImage;
     private volatile double up = -0.001, right = 0.001;
 
     public GamePlayer(String imageName){
         playerIcon = new Image(imageName, 100, 100, true, true);
         playerImage = new ImageView(playerIcon);
+    }
+
+    void setMessage(String m){
+        synchronized(App.getInstance()){
+        message = m;
+        }
+    }
+
+    public String popMessage(){
+        synchronized (App.getInstance()) {
+            String temp = message;
+            message = null;
+            return message;
+        }
+    }
+
+    String getMessage(){
+        synchronized (App.getInstance()) {
+            return message;
+        }
     }
 
     private Thread movTicker = new Thread(()->{

@@ -2,6 +2,7 @@ package corasones;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.scene.CacheHint;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
@@ -34,15 +35,19 @@ public class App extends Application {
     private TextField textField;
     private static boolean buggy=false;
     private static boolean running=true; //terminates threads
+    private static App instance;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        instance = this;
         playersAddresses[0] = InetAddress.getByName("localhost");
         player = new GamePlayer("p1.png");
         player2Image = new ImageView(new Image("p2.png", 100, 100, true, true));
         playerImage = player.playerImage;
         playerImage.setX(1);
         playerImage.setY(1);
+        playerImage.setCacheHint(CacheHint.SPEED);
+        player2Image.setCacheHint(CacheHint.SPEED);
 
         Group root = new Group();
         root.getChildren().addAll(playerImage, player2Image);
@@ -63,8 +68,8 @@ public class App extends Application {
             }
             else if (textField.getText().equals("/terminate")) return;
             else
-                player.message = textField.getText();
-            textArea.appendText(player.message+"\n");
+                player.setMessage(textField.getText());
+            textArea.appendText(player.getMessage()+"\n");
             textField.clear();
             root.requestFocus();
         });
@@ -109,7 +114,7 @@ public class App extends Application {
 
         //window resize handling
         new Thread(() -> {
-            while (isRunning()) {
+                while (isRunning()) {
                 textField.setLayoutX(maxX - 200);
                 textField.setLayoutY(maxY - 40);
                 textArea.setLayoutX(maxX - 200);
@@ -150,6 +155,7 @@ public class App extends Application {
             player.move(event.getCode());
         });
 
+
         if (mode == 1) {
             //multiplayer connection loop
             new Thread(() -> {
@@ -163,8 +169,21 @@ public class App extends Application {
                 }
 
                 player2Image.setVisible(true);
-                while (isRunning()) {
+                NetworkPlayerProperties lastP2Prop = null;
 
+                new Thread(()->{
+                    while(isRunning()) {
+                        sendNetworkPlayerProperties(1);
+                        try {
+                            Thread.sleep(10);
+                            if(buggy) {
+                               Thread.sleep(30);
+                            }
+                        } catch (InterruptedException e) {}
+                    }
+                }).start();
+
+                while (isRunning()) {
                     if(buggy) {
                         try {
                             Thread.sleep(50);
@@ -172,14 +191,14 @@ public class App extends Application {
                             e.printStackTrace();
                         }
                     }
-
-                    NetworkPlayerProperties lastP2Prop = null;
-                    sendNetworkPlayerProperties(1);
+                    player.setMessage(null);
                     player2Properties = receiveNetworkPlayerProperties(1);
                     if (player2Properties != null && !player2Properties.equals(lastP2Prop)) {
                         player2Image.setX(player2Properties.X);
                         player2Image.setY(player2Properties.Y);
-                        textArea.appendText(player2Properties.message + "\n");
+                        if(player2Properties.message != null) {
+                            textArea.appendText(player2Properties.message + "\n");
+                        }
                     }
                     lastP2Prop = player2Properties;
                 }
@@ -193,9 +212,7 @@ public class App extends Application {
             byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(
                     buffer,
-                    buffer.length,
-                    playersAddresses[playerId],
-                    6654);
+                    buffer.length);
             socket.receive(packet);
             ByteArrayInputStream bais = new ByteArrayInputStream(packet.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
@@ -240,28 +257,38 @@ public class App extends Application {
                     }
                 });
             }
-            if(args[0] != null && args[1] == null){
-                if(args[0].equals("-buggy")){
+        }catch(ArrayIndexOutOfBoundsException aioobe){
+            System.out.println("Initializing without networking addresses as parameters.");
+        }
+
+        try {
+                if (args[0].equals("-buggy") || args[0].equals("bug")) {
+                    System.out.println("Using bug-free version");
                     buggy = true;
                 }
-                if(args[0].equals("help") || args[0].equals("-help")){
-                    System.out.println("Execute with parameters:\n"+
-                            "help or -help for reading this,\n"+
-                            "-buggy for using the repaint bug-safe version,\n"+
-                            "<host> <address> for setting an online connection. Don't write the < things >.\n"+
-                            "Remember to write the space between the parameters.\n"+
-                            "I think the host is the LAN address and the network address the public IP.\n"+
-                            "In the app, you can write the command /start for starting as solo or write\n"+
-                            "/connect for using the network info specified with the two parameters and start an online game.\n"+
+                if (args[0].equals("help") || args[0].equals("-help")) {
+                    System.out.println("Execute with parameters:\n" +
+                            "help or -help for reading this,\n" +
+                            "-buggy for using the repaint bug-safe version,\n" +
+                            "<host> <address> for setting an online connection. Don't write the < things >.\n" +
+                            "Remember to write the space between the parameters.\n" +
+                            "I think the host is the LAN address and the network address the public IP.\n" +
+                            "In the app, you can write the command /start for starting as solo or write\n" +
+                            "/connect for using the network info specified with the two parameters and start an online game.\n" +
                             "There is also a /terminate in-App command... Which I don't even know why is there since.\n" +
                             "Yes, you can also press the X.");
                     System.exit(0);
                 }
-            }
-        }catch(ArrayIndexOutOfBoundsException aioobe){System.out.println("Initializing without networking addresses as parameters.");}
+        }catch(ArrayIndexOutOfBoundsException aioobe){
+            System.out.println("Initializing without parameters.");
+        }
 
         launch(args);
         running = false;
+    }
+
+    static public App getInstance(){
+       return instance;
     }
 
 }

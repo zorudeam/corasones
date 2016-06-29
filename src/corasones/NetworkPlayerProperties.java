@@ -4,7 +4,6 @@ public class NetworkPlayerProperties {
 
     public double X, Y;
     public String message;
-    public int msgId;
 
     public NetworkPlayerProperties(double X, double Y, String message){
         this.X = X;
@@ -15,7 +14,7 @@ public class NetworkPlayerProperties {
     public NetworkPlayerProperties(double X, double Y){
         this.X = X;
         this.Y = Y;
-        this.message = "";
+        this.message = null;
     }
 
     @Override
@@ -24,7 +23,7 @@ public class NetworkPlayerProperties {
         if(object == this) return true;
         if(object instanceof NetworkPlayerProperties){
             NetworkPlayerProperties npp = (NetworkPlayerProperties) object;
-            if(npp.X == this.X && npp.Y == this.Y && npp.message.equals(this.message) && npp.msgId == this.msgId)
+            if(npp.X == this.X && npp.Y == this.Y && npp.message.equals(this.message))
                 return true;
         }
         return false;
