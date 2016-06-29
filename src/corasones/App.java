@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.*;
 
-public class Start extends Application {
+public class App extends Application {
     private static ImageView playerImage, player2Image;
     static double maxY=500;
     static double maxX=458.333;
@@ -31,6 +31,7 @@ public class Start extends Application {
     private static int mode;
     private Scene scene;
     private TextArea textArea;
+    private static boolean running=true; //terminates threads
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -58,7 +59,6 @@ public class Start extends Application {
                 mode = 0;
             }
             else if (textField.getText().equals("/restart")) return;
-            else if (textField.getText().equals("/exit")) System.exit(0);
             else
                 player.message = textField.getText();
             textArea.appendText(player.message+"\n");
@@ -105,7 +105,7 @@ public class Start extends Application {
 
         //window resize handling
         new Thread(() -> {
-            while (true) {
+            while (isRunning()) {
                 textField.setLayoutX(maxX - 200);
                 textField.setLayoutY(maxY - 40);
                 textArea.setLayoutX(maxX - 200);
@@ -114,7 +114,7 @@ public class Start extends Application {
 
         //wait for start
         new Thread(()->{
-            while(true){
+            while(isRunning()){
                 if(startOrder){
                     InitializeThreads();
                     break;
@@ -134,7 +134,7 @@ public class Start extends Application {
             //multiplayer connection loop
             new Thread(() -> {
                 player2Image.setVisible(true);
-                while (true) {
+                while (isRunning()) {
                     NetworkPlayerProperties lastP2Prop = null;
                     sendNetworkPlayerProperties(1);
                     player2Properties = receiveNetworkPlayerProperties(1);
@@ -181,6 +181,10 @@ public class Start extends Application {
         } catch (SocketException e) {} catch (IOException e) {}
     }
 
+    public static boolean isRunning(){
+        return running;
+    }
+
     public static void main(String[] args) {
         try {
             if (args[0] != null && args[1] != null) {
@@ -197,5 +201,7 @@ public class Start extends Application {
         }catch(ArrayIndexOutOfBoundsException aioobe){System.out.println("Initializing without networking addresses as parameters.");}
 
         launch(args);
+        running = false;
     }
+
 }

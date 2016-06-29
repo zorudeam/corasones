@@ -30,13 +30,13 @@ public class GamePlayer implements java.io.Serializable{
                 up *= -0.3;
                 playerImage.setY(1);
             }
-            if(100+playerImage.getX()>= Start.maxX){
+            if(100+playerImage.getX()>= App.maxX){
                 right *= -0.3;
-                playerImage.setX(Start.maxX-101);
+                playerImage.setX(App.maxX-101);
             }
-            if(100+playerImage.getY()>= Start.maxY){
+            if(100+playerImage.getY()>= App.maxY){
                 up *= -0.3;
-                playerImage.setY(Start.maxY-101);
+                playerImage.setY(App.maxY-101);
             }
             //set velocities
             if(right!=0.0 && up!=0.0) {
@@ -46,6 +46,8 @@ public class GamePlayer implements java.io.Serializable{
             try {
                 Thread.sleep(30);
             } catch (InterruptedException e) {}
+
+            if(!App.isRunning()) break;
         }
     });
 
@@ -92,7 +94,7 @@ public class GamePlayer implements java.io.Serializable{
             }
         }).start();
 
-        if(!movTicker.isAlive()){
+        if(!movTicker.isAlive() && App.isRunning()){
             movTicker.start();
         }
     }
