@@ -31,6 +31,8 @@ public class App extends Application {
     private static int mode;
     private Scene scene;
     private TextArea textArea;
+    private TextField textField;
+    private static boolean buggy=false;
     private static boolean running=true; //terminates threads
 
     @Override
@@ -45,7 +47,7 @@ public class App extends Application {
         Group root = new Group();
         root.getChildren().addAll(playerImage, player2Image);
 
-        TextField textField = new TextField();
+        textField = new TextField();
         textField.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
         textField.setOnAction(event -> {
             if (textField.isEditable()) textField.setEditable(false);
@@ -59,11 +61,12 @@ public class App extends Application {
                 startOrder = true;
                 mode = 0;
             }
-            else if (textField.getText().equals("/restart")) return;
+            else if (textField.getText().equals("/terminate")) return;
             else
                 player.message = textField.getText();
             textArea.appendText(player.message+"\n");
             textField.clear();
+            root.requestFocus();
         });
         textField.setOnMouseClicked(event -> {
             if (!textField.isEditable()) textField.setEditable(true);
@@ -110,6 +113,13 @@ public class App extends Application {
                 textField.setLayoutX(maxX - 200);
                 textField.setLayoutY(maxY - 40);
                 textArea.setLayoutX(maxX - 200);
+                if(buggy) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }).start();
 
@@ -120,6 +130,15 @@ public class App extends Application {
                     InitializeThreads();
                     break;
                 }
+
+                if(buggy) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
         }).start();
     }
@@ -134,8 +153,26 @@ public class App extends Application {
         if (mode == 1) {
             //multiplayer connection loop
             new Thread(() -> {
+
+                if(buggy) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 player2Image.setVisible(true);
                 while (isRunning()) {
+
+                    if(buggy) {
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     NetworkPlayerProperties lastP2Prop = null;
                     sendNetworkPlayerProperties(1);
                     player2Properties = receiveNetworkPlayerProperties(1);
@@ -186,6 +223,10 @@ public class App extends Application {
         return running;
     }
 
+    public static boolean isBuggy(){
+        return buggy;
+    }
+
     public static void main(String[] args) {
         try {
             if (args[0] != null && args[1] != null) {
@@ -194,10 +235,28 @@ public class App extends Application {
                     try {
                         InetAddress address = InetAddress.getByAddress(args[0], args[1].getBytes());
                     } catch (UnknownHostException uhe) {
-                        System.out.println("I'm sorry, unknown host. Closing program.");
+                        System.out.println("I'm sorry, unknown host/address. Closing program.");
                         System.exit(-1);
                     }
                 });
+            }
+            if(args[0] != null && args[1] == null){
+                if(args[0].equals("-buggy")){
+                    buggy = true;
+                }
+                if(args[0].equals("help") || args[0].equals("-help")){
+                    System.out.println("Execute with parameters:\n"+
+                            "help or -help for reading this,\n"+
+                            "-buggy for using the repaint bug-safe version,\n"+
+                            "<host> <address> for setting an online connection. Don't write the < things >.\n"+
+                            "Remember to write the space between the parameters.\n"+
+                            "I think the host is the LAN address and the network address the public IP.\n"+
+                            "In the app, you can write the command /start for starting as solo or write\n"+
+                            "/connect for using the network info specified with the two parameters and start an online game.\n"+
+                            "There is also a /terminate in-App command... Which I don't even know why is there since.\n" +
+                            "Yes, you can also press the X.");
+                    System.exit(0);
+                }
             }
         }catch(ArrayIndexOutOfBoundsException aioobe){System.out.println("Initializing without networking addresses as parameters.");}
 

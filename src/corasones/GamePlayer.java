@@ -12,7 +12,7 @@ public class GamePlayer implements java.io.Serializable{
     String message="";
     public Image playerIcon;
     public ImageView playerImage;
-    private volatile double up = 0, right = 0;
+    private volatile double up = -0.001, right = 0.001;
 
     public GamePlayer(String imageName){
         playerIcon = new Image(imageName, 100, 100, true, true);
@@ -46,6 +46,14 @@ public class GamePlayer implements java.io.Serializable{
             try {
                 Thread.sleep(30);
             } catch (InterruptedException e) {}
+
+            if(App.isBuggy()) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
 
             if(!App.isRunning()) break;
         }
