@@ -188,7 +188,6 @@ public class App extends Application {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                    player.setMessage(null);
                     player2Properties = receiveNetworkPlayerProperties(1);
                     if (player2Properties != null && !player2Properties.equals(lastP2Prop)) {
                         player2Image.setX(player2Properties.X);

@@ -121,7 +121,7 @@ public class GamePlayer implements java.io.Serializable{
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream ous = new ObjectOutputStream(baos);
-            ous.writeObject(new NetworkPlayerProperties(playerImage.getX(), playerImage.getY(), message));
+            ous.writeObject(new NetworkPlayerProperties(playerImage.getX(), playerImage.getY(), popMessage()));
             byte[] playerInstance = baos.toByteArray();
             return playerInstance;
         } catch (IOException e) { return null; }
