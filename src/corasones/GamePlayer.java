@@ -66,16 +66,6 @@ public class GamePlayer implements java.io.Serializable{
             try {
                 Thread.sleep(30);
             } catch (InterruptedException e) {}
-
-            if(App.isBuggy()) {
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            if(!App.isRunning()) break;
         }
     });
 
@@ -122,7 +112,7 @@ public class GamePlayer implements java.io.Serializable{
             }
         }).start();
 
-        if(!movTicker.isAlive() && App.isRunning()){
+        if(!movTicker.isAlive()){
             movTicker.start();
         }
     }

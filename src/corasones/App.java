@@ -1,6 +1,8 @@
 package corasones;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.CacheHint;
 import javafx.scene.Group;
@@ -14,6 +16,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,7 +28,7 @@ public class App extends Application {
     static double maxY=500;
     static double maxX=458.333;
     //To the moment only for two players
-    private InetAddress [] playersAddresses = new InetAddress [2];
+    private static InetAddress [] playersAddresses = new InetAddress [2];
     private GamePlayer player;
     private NetworkPlayerProperties player2Properties;
     private boolean startOrder=false;
@@ -33,8 +36,6 @@ public class App extends Application {
     private Scene scene;
     private TextArea textArea;
     private TextField textField;
-    private static boolean buggy=false;
-    private static boolean running=true; //terminates threads
     private static App instance;
 
     @Override
@@ -112,38 +113,41 @@ public class App extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent e) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
+
         //window resize handling
         new Thread(() -> {
-                while (isRunning()) {
+                while (true) {
                 textField.setLayoutX(maxX - 200);
                 textField.setLayoutY(maxY - 40);
                 textArea.setLayoutX(maxX - 200);
-                if(buggy) {
                     try {
-                        Thread.sleep(50);
+                            Thread.sleep(50);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                e.printStackTrace();
+            }
             }
         }).start();
 
         //wait for start
         new Thread(()->{
-            while(isRunning()){
+            while(true){
                 if(startOrder){
                     InitializeThreads();
                     break;
                 }
-
-                if(buggy) {
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                }
-
             }
         }).start();
     }
@@ -160,37 +164,30 @@ public class App extends Application {
             //multiplayer connection loop
             new Thread(() -> {
 
-                if(buggy) {
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(50); //yolo
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                }
 
                 player2Image.setVisible(true);
                 NetworkPlayerProperties lastP2Prop = null;
 
                 new Thread(()->{
-                    while(isRunning()) {
+                    while(true) {
                         sendNetworkPlayerProperties(1);
                         try {
-                            Thread.sleep(10);
-                            if(buggy) {
-                               Thread.sleep(30);
-                            }
+                            Thread.sleep(30);
                         } catch (InterruptedException e) {}
                     }
                 }).start();
 
-                while (isRunning()) {
-                    if(buggy) {
+                while (true) {
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                    }
                     player.setMessage(null);
                     player2Properties = receiveNetworkPlayerProperties(1);
                     if (player2Properties != null && !player2Properties.equals(lastP2Prop)) {
@@ -206,7 +203,7 @@ public class App extends Application {
         } else if (mode == 0) player2Image.setVisible(false);
     }
 
-    private NetworkPlayerProperties receiveNetworkPlayerProperties(int playerId){
+    private NetworkPlayerProperties receiveNetworkPlayerProperties(int playerAddressIndex){
         try {
             DatagramSocket socket = new DatagramSocket(6654);
             byte[] buffer = new byte[1024];
@@ -216,7 +213,7 @@ public class App extends Application {
             socket.receive(packet);
             ByteArrayInputStream bais = new ByteArrayInputStream(packet.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
-            if(playersAddresses[playerId] == null) playersAddresses[playerId] = packet.getAddress();
+            if(playersAddresses[playerAddressIndex] == null) playersAddresses[playerAddressIndex] = packet.getAddress();
             return (NetworkPlayerProperties) ois.readObject();
         } catch (SocketException e) {} catch (IOException e) {} catch(ClassNotFoundException cnfe) {}
         return null;
@@ -234,23 +231,16 @@ public class App extends Application {
             );
             socket.send(packet);
         } catch (SocketException e) {} catch (IOException e) {}
-    }
-
-    public static boolean isRunning(){
-        return running;
-    }
-
-    public static boolean isBuggy(){
-        return buggy;
+        catch(NullPointerException npe){ System.out.println("NOT SUCH PLAYER! NullPointerException");}
     }
 
     public static void main(String[] args) {
         try {
             if (args[0] != null && args[1] != null) {
                 new Thread(() -> {
-                    System.out.println("Taken " + args[0] + " as host address and " + args[1] + " as network address.");
+                    System.out.println("Taken " + args[0] + " as host address and " + args[1] + " as network address of second player.");
                     try {
-                        InetAddress address = InetAddress.getByAddress(args[0], args[1].getBytes());
+                         playersAddresses[1] = InetAddress.getByAddress(args[0], args[1].getBytes());
                     } catch (UnknownHostException uhe) {
                         System.out.println("I'm sorry, unknown host/address. Closing program.");
                         System.exit(-1);
@@ -262,14 +252,9 @@ public class App extends Application {
         }
 
         try {
-                if (args[0].equals("-buggy") || args[0].equals("bug")) {
-                    System.out.println("Using bug-free version");
-                    buggy = true;
-                }
                 if (args[0].equals("help") || args[0].equals("-help")) {
                     System.out.println("Execute with parameters:\n" +
                             "help or -help for reading this,\n" +
-                            "-buggy for using the repaint bug-safe version,\n" +
                             "<host> <address> for setting an online connection. Don't write the < things >.\n" +
                             "Remember to write the space between the parameters.\n" +
                             "I think the host is the LAN address and the network address the public IP.\n" +
@@ -281,10 +266,9 @@ public class App extends Application {
                 }
         }catch(ArrayIndexOutOfBoundsException aioobe){
             System.out.println("Initializing without parameters.");
-        }
+        }catch(NullPointerException npe){}
 
         launch(args);
-        running = false;
     }
 
     static public App getInstance(){
