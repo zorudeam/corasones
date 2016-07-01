@@ -86,7 +86,7 @@ public class GamePlayer implements java.io.Serializable{
                 }
                 break;
                 case LEFT: {
-                    if(right<1 && right>0){
+                    if(right>-1 && right<0){
                         right = right - 0.2;
                     }
                     else
@@ -102,7 +102,7 @@ public class GamePlayer implements java.io.Serializable{
                 }
                 break;
                 case DOWN: {
-                    if(up<1 && up>0){
+                    if(up>-1 && up<0){
                         up = up-0.2;
                     }
                     else
