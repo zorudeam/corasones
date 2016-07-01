@@ -159,7 +159,6 @@ public class App extends Application {
             player.move(event.getCode());
         });
 
-
         if (mode == 1) {
             //multiplayer connection loop
             new Thread(() -> {
